@@ -1,9 +1,9 @@
-/* --- Data: Initial State --- */
-// BASELINE DATA: This is the "source of truth" committed to Git.
-// Both Dinko and Nikhil will start from this state.
-// localStorage saves SESSION changes; to PERMANENTLY sync, update this and push.
-// TODO (Future): Google Sheets sync for live multi-user state.
-const initialData = [
+/* --- Google Sheets Sync Configuration --- */
+// This URL points to your Google Apps Script that reads/writes the Sheet
+const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbw-Vn-MH2zOY8c0FzQZt35o7XfpVC1vn12eQxerjqvbmghOsJDO0HnOScRlVpQqsxZe/exec';
+
+// Fallback data if Sheet is empty or unreachable
+const fallbackData = [
     { id: 'ep1', title: 'Ep 01: First Mover Advantage', desc: 'Hook: "In 2008..."', status: 'production', checklist: { record: true, edit: true, publish: false, promo: false } },
     { id: 'ep2', title: 'Ep 02: Subtraction Innovation', desc: 'Hook: "$753M Pill Bottle"', status: 'ready' },
     { id: 'ep3', title: 'Ep 03: AI Consulting Disruption', desc: 'Hook: "Two Scandals..."', status: 'production', checklist: { record: true, edit: false, publish: false, promo: false } },
@@ -14,36 +14,9 @@ const initialData = [
     { id: 'ep8', title: 'Ep 08: The Agentic Future', desc: 'AI as a colleague', status: 'ideas' }
 ];
 
-/* --- State Management --- */
-const STORAGE_KEY = 'creativityBoostersState';
-
-function loadState() {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-        try {
-            return JSON.parse(saved);
-        } catch (e) {
-            console.warn('Failed to parse saved state, using default.');
-        }
-    }
-    return JSON.parse(JSON.stringify(initialData)); // Deep clone
-}
-
-function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-}
-
-function resetToBaseline() {
-    if (confirm('Reset board to the last committed state? This will lose any unsaved changes.')) {
-        localStorage.removeItem(STORAGE_KEY);
-        tasks = JSON.parse(JSON.stringify(initialData));
-        renderBoard();
-        updateProgress();
-    }
-}
-
 /* --- Global State --- */
-let tasks = loadState();
+let tasks = [];
+let isSyncing = false;
 
 /* --- DOM Elements --- */
 const stacks = {
@@ -62,15 +35,73 @@ const progressFill = document.getElementById('season-progress');
 const progressText = document.getElementById('progress-text');
 const researchingBadge = document.getElementById('researching-badge');
 
+/* --- Sync Functions --- */
+async function loadFromSheet() {
+    try {
+        showSyncStatus('Loading...');
+        const response = await fetch(SHEETS_API_URL);
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+            tasks = data;
+            showSyncStatus('Synced ✓', true);
+        } else {
+            console.warn('Sheet empty, using fallback');
+            tasks = JSON.parse(JSON.stringify(fallbackData));
+            showSyncStatus('Using defaults', true);
+        }
+    } catch (error) {
+        console.error('Failed to load from Sheet:', error);
+        tasks = JSON.parse(JSON.stringify(fallbackData));
+        showSyncStatus('Offline mode', true);
+    }
+}
+
+async function saveToSheet() {
+    if (isSyncing) return;
+    isSyncing = true;
+
+    try {
+        showSyncStatus('Saving...');
+        await fetch(SHEETS_API_URL, {
+            method: 'POST',
+            mode: 'no-cors', // Apps Script requires this
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tasks)
+        });
+        showSyncStatus('Saved ✓', true);
+    } catch (error) {
+        console.error('Failed to save to Sheet:', error);
+        showSyncStatus('Save failed!', true);
+    }
+
+    isSyncing = false;
+}
+
+function showSyncStatus(message, fadeOut = false) {
+    let statusEl = document.getElementById('sync-status');
+    if (!statusEl) {
+        statusEl = document.createElement('div');
+        statusEl.id = 'sync-status';
+        statusEl.style.cssText = 'position:fixed;bottom:20px;right:20px;background:rgba(0,0,0,0.8);color:#00E5FF;padding:10px 20px;border-radius:8px;font-size:0.9rem;z-index:1000;transition:opacity 0.5s;';
+        document.body.appendChild(statusEl);
+    }
+    statusEl.textContent = message;
+    statusEl.style.opacity = '1';
+
+    if (fadeOut) {
+        setTimeout(() => { statusEl.style.opacity = '0'; }, 2000);
+    }
+}
+
 /* --- Initialization --- */
-function init() {
+async function init() {
+    await loadFromSheet();
     renderBoard();
     updateProgress();
 }
 
 /* --- Rendering --- */
 function renderBoard() {
-    // Clear all stacks
     Object.values(stacks).forEach(el => el.innerHTML = '');
 
     tasks.forEach(task => {
@@ -93,7 +124,6 @@ function createCard(task) {
         <p>${task.desc}</p>
     `;
 
-    // Production Checklist Feature (with Auto-Archive)
     if (task.status === 'production') {
         const cl = task.checklist || { record: false, edit: false, publish: false, promo: false };
         el.innerHTML += `
@@ -107,7 +137,6 @@ function createCard(task) {
         `;
     }
 
-    // Drag Events
     el.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('text/plain', task.id);
         el.classList.add('is-dragging');
@@ -125,9 +154,8 @@ window.updateChecklist = function (id, field, value) {
     if (task) {
         if (!task.checklist) task.checklist = { record: false, edit: false, publish: false, promo: false };
         task.checklist[field] = value;
-        saveState();
+        saveToSheet();
 
-        // Auto-archive if all checked
         const cl = task.checklist;
         if (cl.record && cl.edit && cl.publish && cl.promo) {
             setTimeout(() => archiveCard(id), 800);
@@ -146,7 +174,6 @@ function updateCounts() {
     counts.ready.innerText = statusCounts.ready || 0;
     counts.production.innerText = statusCounts.production || 0;
 
-    // Zeigarnik Effect: Show badge if items in Researching
     if ((statusCounts.researching || 0) > 0) {
         researchingBadge.style.display = 'inline-block';
     } else {
@@ -154,10 +181,9 @@ function updateCounts() {
     }
 }
 
-/* --- Goal Gradient (Progress Logic) --- */
+/* --- Progress Logic --- */
 function updateProgress() {
     const readyOrDone = tasks.filter(t => t.status === 'ready' || t.status === 'production').length;
-
     const percentage = Math.round((readyOrDone / 8) * 100);
 
     progressFill.style.width = `${percentage}%`;
@@ -170,7 +196,7 @@ function updateProgress() {
     }
 }
 
-/* --- Drag & Drop Handlers --- */
+/* --- Drag & Drop --- */
 function allowDrop(e) {
     e.preventDefault();
 }
@@ -189,11 +215,10 @@ function drop(e) {
         const taskIndex = tasks.findIndex(t => t.id === taskId);
         if (taskIndex > -1) {
             tasks[taskIndex].status = newStatus;
-            // Initialize checklist when moving to production
             if (newStatus === 'production' && !tasks[taskIndex].checklist) {
                 tasks[taskIndex].checklist = { record: false, edit: false, publish: false, promo: false };
             }
-            saveState();
+            saveToSheet();
         }
 
         renderBoard();
@@ -201,7 +226,7 @@ function drop(e) {
     }
 }
 
-/* --- Login Logic --- */
+/* --- Login --- */
 document.getElementById('login-btn').addEventListener('click', () => {
     const input = document.getElementById('password-input').value;
     const overlay = document.getElementById('login-overlay');
@@ -217,7 +242,7 @@ document.getElementById('login-btn').addEventListener('click', () => {
     }
 });
 
-/* --- Archive Logic --- */
+/* --- Archive --- */
 window.archiveCard = function (id) {
     const card = document.getElementById(id);
     if (card) {
@@ -228,7 +253,7 @@ window.archiveCard = function (id) {
 
     setTimeout(() => {
         tasks = tasks.filter(t => t.id !== id);
-        saveState();
+        saveToSheet();
         renderBoard();
         updateProgress();
     }, 500);
