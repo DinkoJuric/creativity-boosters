@@ -1,0 +1,343 @@
+/* --- Variables & Reset --- */
+:root {
+    /* Deep Navy Backgrounds */
+    --bg-main: #00E5FF;
+    /* User Preference: Neon Cyan */
+    --bg-secondary: #0a192f;
+    /* Deep Navy: Keeps depth and readability */
+
+    /* Accents */
+    --accent-primary: #FFAD00;
+    /* Boosters Orange: Complementary to Cyan */
+    --accent-secondary: #ffffff;
+    /* White: Clean accent against the vivid background */
+
+    /* 
+       COLOR PALETTE DOCUMENTATION:
+       - --bg-main (#00E5FF): The electric cyan core of the brand. Used in gradients to provide energy.
+       - --accent-primary (#FFAD00): "Creativity" signal. Used for progress bars and badges.
+       - --state-researching (#FF6D00): Darker orange chosen over yellow for better readability against cyan.
+       - The rest of the interface uses high-opacity glassmorphism to let the cyan shine through without compromising text legibility.
+    */
+
+    /* --- Semantic States (Status Colors) --- */
+    --state-idea: #4a5568;
+    /* Slate Grey: Neutral, unobtrusive for "Backlog" */
+    --state-researching: #FF6D00;
+    /* Deep Orange: Active Research Phase. */
+    --state-ready: #00C853;
+    /* Vivid Green: "Go" signal. High contrast. */
+    --state-production: #6200ea;
+    /* Deep Purple: "Active Work" zone. Replaces Blue/Recorded. */
+
+    /* Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.15);
+    /* Increased opacity for better contrast on bright bg */
+    --glass-border: 1px solid rgba(255, 255, 255, 0.3);
+    --glass-blur: blur(16px);
+    --shadow-soft: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+
+    /* Type */
+    --font-head: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --text-bright: #ffffff;
+    --text-dark: #1a202c;
+    /* New dark text for better read on light/cyan areas */
+    --text-muted: #e2e8f0;
+    /* Lighter muted text for glass cards */
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: radial-gradient(circle at top right, var(--bg-secondary), var(--bg-main));
+    color: var(--text-bright);
+    font-family: var(--font-body);
+    height: 100vh;
+    overflow: hidden;
+    /* App-like feel */
+}
+
+/* --- Layout --- */
+#app-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+    padding: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- Utility: Glass Panel --- */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
+}
+
+/* --- Login Overlay --- */
+#login-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    padding: 40px;
+    text-align: center;
+    z-index: 100;
+}
+
+.logo-text {
+    font-family: var(--font-head);
+    font-size: 2rem;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+}
+
+.accent-text {
+    color: var(--accent-primary);
+}
+
+#password-input {
+    width: 100%;
+    padding: 12px;
+    margin: 20px 0;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    font-family: var(--font-body);
+    text-align: center;
+}
+
+#login-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 8px;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: var(--font-head);
+    transition: transform 0.2s;
+}
+
+#login-btn:hover {
+    transform: scale(1.02);
+}
+
+/* --- Dashboard Header --- */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    margin-bottom: 20px;
+}
+
+.badging {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-left: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* --- Progress Bar (Goal Gradient) --- */
+.progress-section {
+    width: 400px;
+}
+
+.progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+}
+
+.progress-track {
+    height: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+    position: relative;
+    overflow: visible;
+    /* To let milestones pop out */
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    /* JS updates this */
+    background: linear-gradient(90deg, var(--accent-secondary), var(--accent-primary));
+    border-radius: 6px;
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.milestone {
+    width: 16px;
+    height: 16px;
+    background: var(--bg-main);
+    border: 2px solid var(--text-muted);
+    border-radius: 50%;
+    position: absolute;
+    top: -2px;
+    z-index: 2;
+}
+
+.m-50 {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.m-100 {
+    right: -2px;
+}
+
+/* Milestone Animation */
+@keyframes glow {
+    0% {
+        box-shadow: 0 0 5px var(--accent-primary);
+    }
+
+    50% {
+        box-shadow: 0 0 20px var(--accent-primary);
+    }
+
+    100% {
+        box-shadow: 0 0 5px var(--accent-primary);
+    }
+}
+
+.progress-fill.glow-active {
+    animation: glow 2s infinite;
+}
+
+/* --- Kanban Board --- */
+.kanban-board {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.column {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    padding: 10px;
+}
+
+/* Zeigarnik Effect: Researching Column */
+#col-researching {
+    background: rgba(0, 0, 0, 0.35);
+    /* Much darker to stand out against Cyan */
+    /*background: rgba(255, 173, 0, 0.05);*/
+    /* Very subtle tint */
+}
+
+/* Researching Badge */
+#researching-badge {
+    background: #ff4757;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 5px;
+    box-shadow: 0 0 8px #ff4757;
+    animation: badgePulse 2s infinite;
+}
+
+@keyframes badgePulse {
+    0% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.5;
+    }
+}
+
+.col-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-top: 3px solid transparent;
+    /* Colored via inline style */
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.card-stack {
+    flex: 1;
+    overflow-y: auto;
+    padding: 5px;
+}
+
+/* --- Cards --- */
+.task-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.task-card h4 {
+    color: white;
+    font-size: 1rem;
+    margin-bottom: 5px;
+}
+
+.task-card p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Dragging visual */
+.is-dragging {
+    opacity: 0.5;
+    transform: rotate(3deg) scale(0.95);
+    background: var(--accent-secondary);
+}
+
+/* Pulsing Border for Research */
+#col-researching .task-card {
+    border-left-color: var(--state-researching);
+    /* animation: cardPulse 4s infinite; removed for cleaner look, static border is enough cue */
+}

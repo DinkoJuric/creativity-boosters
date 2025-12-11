@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creativity Boosters | Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app-container">
+
+        <!-- Authentication Overlay -->
+        <div id="login-overlay" class="glass-panel">
+            <h1 class="logo-text">CREATIVITY <span class="accent-text">BOOSTERS</span></h1>
+            <p>Enter the studio code to access the production dashboard.</p>
+            <input type="password" id="password-input" placeholder="Studio Code...">
+            <button id="login-btn">ENTER STUDIO</button>
+            <p id="error-msg" style="color:red; display:none; margin-top:10px;">Access Denied</p>
+        </div>
+
+        <main id="dashboard" class="hidden">
+            <!-- Header & Progress -->
+            <header class="dashboard-header glass-panel">
+                <div class="header-left">
+                    <h2>CREATIVITY <span class="accent-text">BOOSTERS</span></h2>
+                    <span class="badging">SEASON 1</span>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-labels">
+                        <span>Season Progress: <span id="progress-text">0/6 Ready</span></span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill" id="season-progress"></div>
+                        <div class="milestone m-50" title="Halfway There!"></div>
+                        <div class="milestone m-100" title="Season Complete!"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Kanban Board -->
+            <section class="kanban-board">
+
+                <!-- Column 1: IDEAS -->
+                <div class="column" id="col-ideas">
+                    <div class="col-header" style="border-color: var(--state-idea)">
+                        <h3>IDEAS</h3>
+                        <span class="count">0</span>
+                    </div>
+                    <div class="card-stack" id="stack-ideas" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <!-- Cards injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Column 2: RESEARCHING (Zeigarnik Effect Zone) -->
+                <div class="column" id="col-researching">
+                    <div class="col-header" style="border-color: var(--state-researching)">
+                        <h3>RESEARCHING <span class="badge" id="researching-badge" style="display:none"></span></h3>
+                        <span class="count">0</span>
+                    </div>
+                    <div class="card-stack" id="stack-researching" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <!-- Cards injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Column 3: READY -->
+                <div class="column" id="col-ready">
+                    <div class="col-header" style="border-color: var(--state-ready)">
+                        <h3>READY</h3>
+                        <span class="count">0</span>
+                    </div>
+                    <div class="card-stack" id="stack-ready" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <!-- Cards injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Column 4: POST-PRODUCTION (Consolidated Checklist Zone) -->
+                <div class="column" id="col-production">
+                    <div class="col-header" style="border-color: var(--state-production)">
+                        <h3>PRODUCTION</h3>
+                        <span class="count">0</span>
+                    </div>
+                    <div class="card-stack" id="stack-production" ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <!-- Cards injected by JS -->
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
