@@ -33,7 +33,7 @@ This guide explains how to connect your Kanban dashboard to a Google Sheet so th
 3. Paste this code:
 
 ```javascript
-// Replace with your actual spreadsheet ID
+// Replace with your actual spreadsheet ID (just the ID, not the full URL)
 const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE';
 const SHEET_NAME = 'Sheet1';
 const DATA_CELL = 'A1';
@@ -50,12 +50,16 @@ function doGet(e) {
 function doPost(e) {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
   
-  // Handle both JSON and form data
   let newData;
-  if (e.postData && e.postData.contents) {
+  
+  // Handle form-encoded data (from URLSearchParams)
+  if (e.parameter && e.parameter.data) {
+    // Decode URL-encoded characters like %22 back to "
+    newData = decodeURIComponent(e.parameter.data);
+  }
+  // Fallback: Handle raw JSON POST
+  else if (e.postData && e.postData.contents) {
     newData = e.postData.contents;
-  } else if (e.parameter && e.parameter.data) {
-    newData = e.parameter.data;
   }
   
   if (newData) {
@@ -63,7 +67,7 @@ function doPost(e) {
   }
   
   return ContentService
-    .createTextOutput(JSON.stringify({success: true, received: newData ? true : false}))
+    .createTextOutput(JSON.stringify({success: true}))
     .setMimeType(ContentService.MimeType.JSON);
 }
 ```
