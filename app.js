@@ -263,5 +263,50 @@ window.archiveCard = function (id) {
     }, 500);
 };
 
+/* --- Add Card Modal --- */
+window.openAddModal = function () {
+    document.getElementById('add-modal').style.display = 'flex';
+    document.getElementById('new-title').focus();
+};
+
+window.closeAddModal = function () {
+    document.getElementById('add-modal').style.display = 'none';
+    document.getElementById('new-title').value = '';
+    document.getElementById('new-desc').value = '';
+};
+
+window.submitNewCard = function () {
+    const title = document.getElementById('new-title').value.trim();
+    const desc = document.getElementById('new-desc').value.trim();
+
+    if (!title) {
+        alert('Please enter a title');
+        return;
+    }
+
+    // Generate new ID
+    const maxId = tasks.reduce((max, t) => {
+        const num = parseInt(t.id.replace('ep', '')) || 0;
+        return num > max ? num : max;
+    }, 0);
+    const newId = 'ep' + (maxId + 1);
+
+    // Create new card
+    tasks.push({
+        id: newId,
+        title: title,
+        desc: desc || 'New episode idea',
+        status: 'ideas'
+    });
+
+    saveToSheet();
+    renderBoard();
+    updateProgress();
+    closeAddModal();
+
+    showSyncStatus('Episode added!', true);
+};
+
 // Start
 init();
+
