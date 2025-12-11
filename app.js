@@ -62,12 +62,16 @@ async function saveToSheet() {
 
     try {
         showSyncStatus('Saving...');
+
+        // Use form data to avoid CORS preflight
+        const formData = new URLSearchParams();
+        formData.append('data', JSON.stringify(tasks));
+
         await fetch(SHEETS_API_URL, {
             method: 'POST',
-            mode: 'no-cors', // Apps Script requires this
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tasks)
+            body: formData
         });
+
         showSyncStatus('Saved ✓', true);
     } catch (error) {
         console.error('Failed to save to Sheet:', error);

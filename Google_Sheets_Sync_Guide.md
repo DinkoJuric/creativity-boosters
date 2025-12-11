@@ -49,12 +49,21 @@ function doGet(e) {
 
 function doPost(e) {
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAME);
-  const newData = e.postData.contents;
   
-  sheet.getRange(DATA_CELL).setValue(newData);
+  // Handle both JSON and form data
+  let newData;
+  if (e.postData && e.postData.contents) {
+    newData = e.postData.contents;
+  } else if (e.parameter && e.parameter.data) {
+    newData = e.parameter.data;
+  }
+  
+  if (newData) {
+    sheet.getRange(DATA_CELL).setValue(newData);
+  }
   
   return ContentService
-    .createTextOutput(JSON.stringify({success: true}))
+    .createTextOutput(JSON.stringify({success: true, received: newData ? true : false}))
     .setMimeType(ContentService.MimeType.JSON);
 }
 ```
